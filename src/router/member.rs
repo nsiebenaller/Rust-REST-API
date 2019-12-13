@@ -1,31 +1,22 @@
 use actix_web::{web, Responder, get, post};
 extern crate postgres;
-use postgres::{Connection, TlsMode};
+use postgres::{Connection};
+
+extern crate chrono;
+use chrono::{DateTime, Utc};
 
 
 pub fn member_router(cfg: &mut web::ServiceConfig) {
     cfg.service(
-        web::scope("/members")
-        .service(get_all)
+        web::scope("/members").service(get_all)
     );
 }
 
-pub fn establish_connection() {
-    let conn = Connection::connect("postgres://postgres:postgres@localhost", TlsMode::None).unwrap();
-
-
-    // let conn = PgConnection::establish("postgres://postgres:postgres@localhost")
-    //     .expect(&format!("Error connecting to db"));
-
-    // let query = sql_query("SELECT now();");
-    // let time: models::CurrTime = query.load::<models::CurrTime>(&conn);
-
-
-}
-
 #[get("")]
-fn get_all() -> impl Responder {
-    "Hello world!"
+fn get_all(conn: web::Data<Connection>) -> impl Responder {
+    let result = conn.query("SELECT now()", &[]).unwrap();
+    let time: DateTime<Utc> = result.get(0).get(0);
+    format!("{}", time)
 }
 
 #[post("/new")]
