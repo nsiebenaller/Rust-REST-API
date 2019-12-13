@@ -1,10 +1,26 @@
 use actix_web::{web, Responder, get, post};
+extern crate postgres;
+use postgres::{Connection, TlsMode};
+
 
 pub fn member_router(cfg: &mut web::ServiceConfig) {
     cfg.service(
         web::scope("/members")
         .service(get_all)
     );
+}
+
+pub fn establish_connection() {
+    let conn = Connection::connect("postgres://postgres:postgres@localhost", TlsMode::None).unwrap();
+
+
+    // let conn = PgConnection::establish("postgres://postgres:postgres@localhost")
+    //     .expect(&format!("Error connecting to db"));
+
+    // let query = sql_query("SELECT now();");
+    // let time: models::CurrTime = query.load::<models::CurrTime>(&conn);
+
+
 }
 
 #[get("")]
