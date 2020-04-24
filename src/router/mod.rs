@@ -1,18 +1,16 @@
-use actix_web::web;
-
+use actix_web::{web, get};
 mod member;
 use member::member_router;
-
-extern crate postgres;
-use postgres::{Connection, TlsMode};
 
 pub fn router_config(cfg: &mut web::ServiceConfig) {
     cfg.service(
         web::scope("/api")
-        .configure(member_router)
-    ).data(create_connection());
+        .configure(member_router),
+    );
+    cfg.service(web::scope("").service(no_params));
 }
 
-fn create_connection() -> Connection {
-    Connection::connect("postgres://postgres:postgres@localhost", TlsMode::None).unwrap()
+#[get("/")]
+async fn no_params() -> &'static str {
+    "Hello world!\r\n"
 }

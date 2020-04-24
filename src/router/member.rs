@@ -1,10 +1,12 @@
-use actix_web::{web, Responder, get, post};
-extern crate postgres;
-use postgres::{Connection};
+use actix_web::{web,  get};
+use diesel::pg::PgConnection;
+use diesel::RunQueryDsl;
+use diesel::dsl::sql_query;
+use diesel::r2d2::{self, ConnectionManager};
+use diesel::sql_types::BigInt;
 
-extern crate chrono;
-use chrono::{DateTime, Utc};
-
+type DbPool = r2d2::Pool<ConnectionManager<PgConnection>>;
+const QUERY: &str = "SELECT now()";
 
 pub fn member_router(cfg: &mut web::ServiceConfig) {
     cfg.service(
@@ -12,29 +14,40 @@ pub fn member_router(cfg: &mut web::ServiceConfig) {
     );
 }
 
-#[get("")]
-fn get_all(conn: web::Data<Connection>) -> impl Responder {
-    let result = conn.query("SELECT now()", &[]).unwrap();
-    let time: DateTime<Utc> = result.get(0).get(0);
-    format!("{}", time)
+#[derive(Debug, QueryableByName)]
+pub struct TimeRow {
+    #[sql_type="BigInt"]
+    pub now: i64,
 }
 
-#[post("/new")]
-fn create_member() -> impl Responder {
-    "Create User"
+#[get("/")]
+async fn get_all(pool: web::Data<DbPool>) -> String {
+    let conn = pool.get().expect("Failed to get DB Conn from Pool");
+
+    let query = sql_query(QUERY);
+    let time: Vec<TimeRow> = query.load::<TimeRow>(&conn).unwrap();
+
+    let resp = format!("{:?}", time);
+    resp
 }
 
-#[post("/update")]
-fn update_member() -> impl Responder {
-    "Update User"
-}
 
-#[post("/add_tag")]
-fn add_tag() -> impl Responder {
-    "Add tag to user"
-}
+// #[post("/new")]
+// fn create_member() -> impl Responder {
+//     "Create User"
+// }
 
-#[post("/remove_tag")]
-fn remove_tag() -> impl Responder {
-    "Remove tag from user"
-}
+// #[post("/update")]
+// fn update_member() -> impl Responder {
+//     "Update User"
+// }
+
+// #[post("/add_tag")]
+// fn add_tag() -> impl Responder {
+//     "Add tag to user"
+// }
+
+// #[post("/remove_tag")]
+// fn remove_tag() -> impl Responder {
+//     "Remove tag from user"
+// }
